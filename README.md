@@ -655,6 +655,12 @@ you can analyze your own sessions to find patterns that the plugin should handle
 # Trends: Windowed aggregates (7d/30d/all) from metrics ledger
 /session-trends
 /session-trends --compare baseline
+/session-trends --html out.html       # HTML report with ASCII bar charts
+
+# Pure context-window stats (max tokens, ctx %, compaction rate) across raw JSONL
+python3 .claude/skills/session-scan/references/compute-metrics.py \
+  --scan-jsonl ~/.claude/projects/<project-id>/ \
+  --since 2026-04-01 --html ctx-stats.html
 
 # Skill effectiveness monitoring (requires session-scan data)
 /skill-monitor                  # Dashboard: all skills
@@ -699,6 +705,7 @@ This plugin was built with insights from these articles, repositories, and tools
 - <https://github.com/anthropics/claude-plugins-official>
 - <https://github.com/anthropics/skills>
 - <https://github.com/rjs/shaping-skills>
+- <https://github.com/earendil-works/pi/blob/main/scripts/session-context-stats.mjs> (badlogic — token usage / context % metrics, per-model + per-day breakdown, and ASCII-bar HTML report layout borrowed for `compute-metrics.py --scan-jsonl` and `/session-trends --html`)
 - <https://github.com/affaan-m/everything-claude-code>
 - <https://github.com/blader/theorist>
 - <https://github.com/tmchow/tmc-marketplace> (iterative-engineering plugin)
