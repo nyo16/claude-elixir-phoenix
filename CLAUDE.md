@@ -524,7 +524,7 @@ These rules are NEVER violated. If code would violate them, **STOP and explain**
 
 ### LiveView Iron Laws
 
-1. **NO database queries in disconnected mount** - Use `assign_async`
+1. **NO unconditional DB queries in mount** - Mount runs twice. Default: `assign_async`. SEO routes: `connected?` + cache-backed disconnected branch (dead-render IS the crawler-indexed HTML)
 2. **ALWAYS use streams for lists >100 items** - Regular assigns = O(n) memory per user
 3. **CHECK `connected?/1` before PubSub subscribe** - Prevents double subscriptions
 

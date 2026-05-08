@@ -136,7 +136,7 @@ Iron Laws are non-negotiable rules that every agent enforces. If your code viola
 
 | Law | Why |
 |-----|-----|
-| No DB queries in disconnected mount | Would run twice, waste resources |
+| No unconditional DB queries in mount | Cache-backed branch OK for SEO |
 | Use streams for lists >100 items | Regular assigns = O(n) memory per user |
 | No `:float` for money | Floating point math loses precision |
 | Pin values with `^` in Ecto queries | Prevents SQL injection |

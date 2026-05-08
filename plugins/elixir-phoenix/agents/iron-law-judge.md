@@ -51,15 +51,52 @@ disallowed — you cannot modify source code, which upholds Review Iron Law #1.
 
 ### LiveView Iron Laws
 
-**#1 No DB queries in disconnected mount**
+**#1 No unconditional DB queries in disconnected mount**
 
-- Severity: CRITICAL
+The rule: `mount/3` runs TWICE on full page load (HTTP + WebSocket). Unconditional
+`Repo.*` calls double DB pressure for zero benefit. BUT the disconnected render
+IS the HTML that Googlebot, GPTBot, PerplexityBot, ClaudeBot, and noscript clients
+see — for SEO-visible content, fetching there is INTENTIONAL.
+
+Detection is 4-state, not binary:
+
 - Files: `*_live.ex`
-- Detection: Search `mount/2` functions for `Repo.` calls without `connected?` guard
-- Pattern: Look for `def mount(` followed by `Repo.` without `if connected?(socket)` or `assign_async`
-- Confidence: LIKELY — mount may delegate to a function that checks `connected?`
-- Detection approach: Use Grep tool on each `*_live.ex` file for patterns `def mount(`, `Repo\.`,
-  `connected?`, `assign_async`. Flag if `Repo.` appears in mount scope without guard.
+- Detection approach: Use Grep on each file for `def mount(`, `Repo\.`, `connected?`,
+  `assign_async`, `stream_async`, `Cache\.`, `:persistent_term`, `:ets\.lookup`. Then
+  Read the mount function body and classify into one of the four cases below.
+
+Cases:
+
+| Pattern | Verdict | Severity |
+|---------|---------|----------|
+| `Repo.*` in mount with NO `connected?` guard, NO `assign_async`, NO cache | CRITICAL — 2× DB load | BLOCKER |
+| `assign_async` or `stream_async` | CLEAN — preferred default | (skip, do not report) |
+| `connected?(socket)` guard, disconnected branch returns `[]`/`nil`/skeleton | CLEAN — fast dead-render | (skip) |
+| `connected?(socket)` guard, disconnected branch calls `Cache.*` / `:persistent_term.get` / ETS lookup | CLEAN — SEO/dead-render pattern (cache-backed) | (skip, optional INFO note) |
+| `Repo.*` in `else` branch of `connected?` guard (uncached) | SUGGESTION — likely SEO intent, but cache-backed is faster | SUGGESTION |
+| `Repo.*` in mount with no guard, but file is a public marketing/article route (e.g., `*landing*`, `*article*`, `*blog*`, `*post_show*`, `*public*`) | SUGGESTION — SEO intent likely; recommend cache-backed pattern | SUGGESTION |
+
+Confidence: LIKELY for the CRITICAL case (mount may delegate to a helper that
+checks `connected?`); REVIEW for the SEO heuristics. Always inspect the actual
+branch logic with Read before flagging.
+
+**Fix recommendation when flagging the CRITICAL case:** suggest `assign_async` first
+(simplest), then offer the cache-backed pattern if the route is SEO-sensitive:
+
+```elixir
+# Cache-backed dead-render — SEO + low DB pressure
+def mount(_params, _session, socket) do
+  products =
+    if connected?(socket),
+      do: Catalog.list_products(),
+      else: Cache.get_products() || []
+
+  {:ok, assign(socket, products: products)}
+end
+```
+
+See `liveview-patterns` skill (`references/async-streams.md` → "SEO Dead-Render Pattern")
+for the canonical implementation. Do NOT flag this pattern as a violation.
 
 **#2 Streams for large lists**
 

@@ -4,7 +4,7 @@
 
 jq -n '{hookSpecificOutput: {hookEventName: "SubagentStart", additionalContext:
 "Elixir/Phoenix Iron Laws (NON-NEGOTIABLE):
-- NO database queries in disconnected mount — use assign_async
+- NO unconditional DB queries in mount — use assign_async (or connected? + cache-backed branch for SEO routes)
 - ALWAYS use streams for lists >100 items
 - CHECK connected?/1 before PubSub subscribe
 - NEVER use :float for money — use :decimal or :integer (cents)

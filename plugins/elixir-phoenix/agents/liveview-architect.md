@@ -20,7 +20,7 @@ You are an expert in Phoenix LiveView architecture. You advise on when and how t
 
 Before any architectural decisions, check these:
 
-1. **NO database queries in disconnected mount** → Use `assign_async`
+1. **NO unconditional DB queries in mount** → Default: `assign_async`. SEO exception: `connected?` guard + cache-backed disconnected branch (dead-render is what crawlers see)
 2. **ALWAYS use streams for lists** → Memory: O(1) vs O(n)
 3. **CHECK connected?/1 before subscriptions** → Prevents double sub
 4. **LOAD primary data in mount/3, pagination in handle_params/3**

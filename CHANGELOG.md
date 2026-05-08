@@ -5,6 +5,23 @@ All notable changes to the Elixir/Phoenix Claude Code plugin.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.8.7] - 2026-05-08
+
+### Changed
+
+- **Iron Law #1 — SEO/dead-render exception** (issue #44) — `iron-law-judge`
+  now uses 4-state detection instead of binary CRITICAL on any `Repo.*` in
+  mount. Cache-backed disconnected branches (`Cache.*`, `:persistent_term`,
+  ETS) are recognised as the canonical SEO/dead-render pattern and pass
+  cleanly. Uncached `Repo.*` in the disconnected branch downgrades from
+  BLOCKER to SUGGESTION with a "if SEO, prefer cache-backed" hint. Updated
+  wording in `liveview-patterns` SKILL, `async-streams.md` reference (new
+  "SEO Dead-Render Pattern" section), `liveview-architect`, root CLAUDE.md,
+  `inject-iron-laws.sh`, and `intro/tutorial-content.md` so all surfaces
+  stay coherent. Verified end-to-end: 6 synthetic LiveView fixtures
+  classified correctly (1 CRITICAL, 4 CLEAN incl. cache-backed/persistent_term,
+  1 SUGGESTION). Resolves the false-positive flagged by @javiercr.
+
 ## [2.8.6] - 2026-04-28
 
 ### Changed
