@@ -4,7 +4,7 @@
     "Add @moduledoc and @doc comments to the auth context module I just created",
     "Document the ProfileComponent LiveView component with proper @doc annotations",
     "Write documentation for the payment schema, including @doc for each field",
-    "Update the README to document the new user registration workflow feature",
+    "Add @moduledoc strings to all the modules under lib/myapp/billing/",
     "After the review, ensure all new code has proper @moduledoc and @doc comments"
   ],
   "should_not_trigger": [

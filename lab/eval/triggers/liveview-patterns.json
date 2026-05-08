@@ -1,11 +1,11 @@
 {
   "skill": "liveview-patterns",
   "should_trigger": [
-    "Implement real-time notifications using PubSub subscriptions",
+    "Wire up a LiveView to broadcast PubSub updates from another process",
     "How do I load data async without blocking the initial render?",
-    "Add a file upload handler to my form component",
+    "Add a file upload handler to my LiveView form component",
     "My phx-change events aren't calling handle_event, how do I debug?",
-    "Build a reusable modal component with proper lifecycle management"
+    "Build a reusable LiveView modal component with proper lifecycle management"
   ],
   "should_trigger_test": [
     "How do I use streams instead of assigns for a long list of items?",
