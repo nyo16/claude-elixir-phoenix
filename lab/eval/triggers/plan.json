@@ -15,10 +15,10 @@
     "Create a plan for migrating from Phoenix 1.7 scopes to 1.8 scopes"
   ],
   "should_not_trigger": [
-    "Why is my save failing with this Ecto error? — /phx:investigate (debugging specific error)",
-    "Add an email field to the user registration form — /phx:quick (small single-file change)",
-    "Show me examples of GenServer patterns — /phx:elixir-idioms (reference skill, not implementation planning)",
-    "Can you review my authentication implementation? — /phx:review (code review, not planning)",
-    "Let me implement the plan we designed — /phx:work (execution phase, plan already exists)"
+    "Why is my save failing with this Ecto error?",
+    "Add an email field to the user registration form",
+    "Show me examples of GenServer patterns",
+    "Can you review my authentication implementation?",
+    "Let me implement the plan we designed"
   ]
 }

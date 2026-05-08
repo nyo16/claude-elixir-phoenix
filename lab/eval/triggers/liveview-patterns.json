@@ -11,12 +11,12 @@
     "How do I use streams instead of assigns for a long list of items?",
     "Set up Phoenix.PubSub to broadcast changes across LiveView processes",
     "Create a multi-step form wizard with temporary assigns between steps",
-    "My LiveView mount is slow because it queries the database — how to fix?",
+    "My LiveView mount is slow because it queries the database",
     "Add JS hooks for a drag-and-drop sortable list in my LiveView"
   ],
   "should_not_trigger": [
-    "Write ExUnit tests for my live view's handle_event — testing",
-    "How do I preload database associations for my dropdown? — ecto-patterns",
-    "Set up an Oban worker to process background tasks — oban"
+    "Write ExUnit tests for my live view's handle_event",
+    "How do I preload database associations for my dropdown?",
+    "Set up an Oban worker to process background tasks"
   ]
 }

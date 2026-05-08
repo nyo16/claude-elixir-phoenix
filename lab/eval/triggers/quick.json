@@ -15,13 +15,13 @@
     "Add a new route for the /api/health endpoint"
   ],
   "should_not_trigger": [
-    "Why isn't my form submitting correctly — belongs to investigate (bug report)",
-    "Refactor the user context to separate concerns — belongs to plan (large refactor)",
-    "Check my authentication code for security issues — belongs to security (security review)",
-    "Fix the component that's not rendering at all — belongs to investigate (bug)",
-    "What command should I use for this task — belongs to help (navigation)",
-    "Validate my schema design before implementation — belongs to plan (design validation)",
-    "Check for N+1 queries in the user loader — belongs to n1-check (specific analysis)",
-    "Generate API documentation for this endpoint — belongs to document (documentation)"
+    "Why isn't my form submitting correctly",
+    "Refactor the user context to separate concerns",
+    "Check my authentication code for security issues",
+    "Fix the component that's not rendering at all",
+    "What command should I use for this task",
+    "Validate my schema design before implementation",
+    "Check for N+1 queries in the user loader",
+    "Generate API documentation for this endpoint"
   ]
 }
