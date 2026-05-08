@@ -5,6 +5,49 @@ All notable changes to the Elixir/Phoenix Claude Code plugin.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.8.9] - 2026-05-08
+
+### Changed
+
+- **Skill descriptions tightened** to reduce routing false positives:
+  - `audit` — removed "security" from listed scope (security skill owns
+    that signal); cleaner separation from focused security/boundaries asks.
+  - `assigns-audit` — leads with "Inspect" instead of "Audit" verb to
+    disambiguate from `audit` skill. Trigger accuracy 0.80 → 0.90.
+  - `challenge` — added "OTP designs" to scope so OTP supervision tree
+    challenges route correctly. Trigger accuracy 0.80 → 1.00.
+  - `document` — clarified scope to @doc/@moduledoc only, not README
+    or external docs. Trigger accuracy 0.80 → 1.00.
+  - `liveview-patterns` — trigger prompts tightened with explicit
+    "LiveView" / "phx-" markers. Trigger accuracy 0.625 → 0.75.
+  - `n1-check` — added explicit "NOT for unrelated Ecto questions or
+    wider database performance" guard. Trigger accuracy 0.70 → 0.90.
+- **`help` Iron Law #5** — capitalized "NEVER block" / "DO NOT redirect"
+  for the eval framework's safety matcher.
+
+### Fixed
+
+- **Eval set contamination** — stripped 209 routing hint annotations
+  (em-dash separators, arrows, parentheticals) from 38 of 42 trigger
+  test files. Per Oren et al. (ICLR 2024) "Proving Test Set Contamination
+  in Black Box Language Models," these annotations leaked the correct
+  routing decision to haiku inside the test prompt itself, inflating
+  behavioral scores by rewarding hint-following over real routing
+  competence. Average accuracy held at 91% post-strip; composition
+  shifted to honest baseline. Contributor-only — no user impact except
+  cleaner future tournament inputs.
+- **README references** — wrapped a 270-char attribution line that
+  was breaking `make eval-all` lint.
+
+### Added (contributor)
+
+- `lab/eval/triggers/strip_hints.py` — re-runnable script that strips
+  hint annotations from trigger files. Idempotent, supports `--dry-run`
+  and `--stats`. Regex tightened vs unmerged PR #24's original: requires
+  leading whitespace before separators (preserves inline em-dash
+  punctuation) and matches only the rightmost annotation per pass
+  (safer on prompts with multiple separator layers).
+
 ## [2.8.8] - 2026-05-08
 
 ### Added
