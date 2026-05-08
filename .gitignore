@@ -28,8 +28,12 @@ node_modules/
 .claude/docs-check/
 scratchpad/
 
-# Tournament runtime artifacts (caches, python bytecode)
-/lab/tournament/__pycache__/
+# Python bytecode (any subdirectory)
+__pycache__/
+*.pyc
+*.pyo
+
+# Tournament runtime artifacts
 /lab/tournament/results/
 
 # Scribe / iMessage ingestion scratch (regenerated on cron)

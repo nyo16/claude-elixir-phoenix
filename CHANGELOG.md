@@ -5,6 +5,51 @@ All notable changes to the Elixir/Phoenix Claude Code plugin.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.8.8] - 2026-05-08
+
+### Added
+
+- **`/phx:mix-compression` skill** (issue #40, Angle 1) — installs
+  [rtk](https://github.com/rtk-ai/rtk) filters that compress
+  `mix test/credo/dialyzer/compile/deps.get/ecto.migrate` output before it
+  reaches the transcript. Bundled `references/rtk-filters.toml` is the
+  battle-tested filter set with embedded test fixtures: short-circuits
+  happy paths to one-liners (`mix test: all pass`, `mix credo: clean`)
+  while preserving compile errors, test failures, and stack traces. Critical
+  signals (`** (CompileError)`, `== Compilation error in`, `FAILURES`,
+  dialyzer warnings, file:line frames) are never stripped. Expected gain
+  on mix-heavy sessions: 5-15% per-session token reduction. Skill walks
+  through detection (`which rtk`), install (homebrew + `rtk init zsh`
+  shell hook), seeding `.rtk/filters.toml`, and verification via
+  `rtk test mix-test`. Pointer added to `/phx:permissions` "Related"
+  section. Architecture note in skill body: this lives in a skill rather
+  than a `PostToolUse` hook because rtk's subprocess-wrapping is the
+  correct architectural layer — hook output cannot retroactively shrink
+  what's already in the transcript.
+
+- **Retention@K convergence metric** (issue #40, Angle 3) — new
+  `lab/autoresearch/retention.py` module + `retention` CLI subcommand on
+  `run-iteration.py`. Computes overlap of top-K skills (by trigger
+  accuracy) between consecutive iterations and appends to
+  `lab/autoresearch/retention.jsonl` (gitignored, append-only ledger).
+  Defaults match the TACO paper (arXiv 2604.19572): `K=30`,
+  `threshold=0.9`, `streak=2`. New `target --check-retention` flag
+  short-circuits to `retention_converged` when the top-K ranking has
+  stabilized for two consecutive iterations — autoresearch can stop
+  running mutations when the skill pool stops reshuffling. Pure-function
+  core (`retention_at_k`, `compute_topk_by_trigger`, `is_converged`)
+  testable without any I/O fixtures. Dev-tooling only — zero impact on
+  plugin users.
+
+### Notes
+
+- **Issue #40 Angle 2 deferred** — evolving `compound-docs` into a rule
+  pool depends on Angle 1 telemetry justifying the investment. With rtk
+  carrying compression at the subprocess layer (and CC v2.1.121's
+  `hookSpecificOutput.updatedToolOutput` opening a future hook path),
+  there's no urgency to build a second compression layer in the plugin.
+  Re-evaluate after a quarter of dogfooding rtk + Retention@K.
+
 ## [2.8.7] - 2026-05-08
 
 ### Changed

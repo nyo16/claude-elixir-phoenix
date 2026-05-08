@@ -398,11 +398,30 @@ def cmd_revert(args):
 
 def cmd_target(args):
     """Find weakest skill+dimension."""
+    if getattr(args, "check_retention", False):
+        from lab.autoresearch.retention import is_converged
+        if is_converged(streak=args.retention_streak):
+            print(json.dumps({
+                "status": "retention_converged",
+                "message": "AUTORESEARCH_COMPLETE_VIA_RETENTION",
+            }))
+            return
     target = find_weakest(args.strategy)
     if target is None:
         print(json.dumps({"status": "all_perfect", "message": "AUTORESEARCH_COMPLETE"}))
     else:
         print(json.dumps(target))
+
+
+def cmd_retention(args):
+    """Compute Retention@K, append to ledger, print status."""
+    from lab.autoresearch.retention import check_retention
+    result = check_retention(
+        k=args.k,
+        threshold=args.threshold,
+        streak=args.streak,
+    )
+    print(json.dumps(result, indent=2 if args.pretty else None))
 
 
 # Deviation-type → mutation strategy. Phase 4b dispatch table.
@@ -618,7 +637,22 @@ def main():
     # target
     p_target = sub.add_parser("target", help="Find weakest skill+dimension")
     p_target.add_argument("--strategy", default="targeted", choices=["targeted", "sweep", "random"])
+    p_target.add_argument("--check-retention", action="store_true",
+                          help="Short-circuit to retention_converged when Retention@K stable")
+    p_target.add_argument("--retention-streak", type=int, default=2,
+                          help="Consecutive iterations above threshold required (default: 2)")
     p_target.set_defaults(func=cmd_target)
+
+    # retention
+    p_retention = sub.add_parser("retention",
+                                  help="Compute Retention@K convergence over top-K trigger accuracy")
+    p_retention.add_argument("--k", type=int, default=30, help="Top-K size (default: 30)")
+    p_retention.add_argument("--threshold", type=float, default=0.9,
+                              help="Retention threshold (default: 0.9)")
+    p_retention.add_argument("--streak", type=int, default=2,
+                              help="Consecutive iterations required for convergence (default: 2)")
+    p_retention.add_argument("--pretty", action="store_true", help="Pretty-print JSON")
+    p_retention.set_defaults(func=cmd_retention)
 
     # deviations
     p_dev = sub.add_parser("deviations", help="Inspect classified trigger deviations")
