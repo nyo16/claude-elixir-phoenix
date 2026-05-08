@@ -705,7 +705,10 @@ This plugin was built with insights from these articles, repositories, and tools
 - <https://github.com/anthropics/claude-plugins-official>
 - <https://github.com/anthropics/skills>
 - <https://github.com/rjs/shaping-skills>
-- <https://github.com/earendil-works/pi/blob/main/scripts/session-context-stats.mjs> (badlogic — token usage / context % metrics, per-model + per-day breakdown, and ASCII-bar HTML report layout borrowed for `compute-metrics.py --scan-jsonl` and `/session-trends --html`)
+- <https://github.com/earendil-works/pi/blob/main/scripts/session-context-stats.mjs>
+  (badlogic — token usage / context % metrics, per-model + per-day breakdown,
+  and ASCII-bar HTML report layout borrowed for `compute-metrics.py --scan-jsonl`
+  and `/session-trends --html`)
 - <https://github.com/affaan-m/everything-claude-code>
 - <https://github.com/blader/theorist>
 - <https://github.com/tmchow/tmc-marketplace> (iterative-engineering plugin)
