@@ -5,6 +5,128 @@ All notable changes to the Elixir/Phoenix Claude Code plugin.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.9.0] - 2026-05-16
+
+Ships the `/phx:deps-audit` + `/phx:deps-vet` Hex/Elixir supply-chain
+suite. Built across five internal phases and two real-project dogfood
+passes (enaia-main, virgil) and consolidated into a single release —
+none of the interim 2.10.0–2.12.0 bumps were ever tagged or shipped
+(last release was v2.8.8).
+
+### Added
+
+- **`/phx:deps-audit` — Hex supply-chain audit.** 8-rule MVP catalogue
+  per dependency tarball: bidi Unicode (Trojan Source
+  CVE-2021-42574), `Code.eval_*`/`:erlang.apply` at module scope,
+  compile-time `System.cmd`/`:os.cmd`/`Port.open`,
+  `:erlang.binary_to_term/1` without `:safe`, new `:git`/`:path`
+  deps, maintainer rotation (Hex API), large base64 blobs, and
+  Levenshtein typosquats (≤2 + 1000× download delta). Modes: B
+  (working vs HEAD, default), C (vs `--base <ref>`), A (`--preview` —
+  locked vs Hex latest). Wraps `mix hex.audit` (always), `mix_audit`
+  (GHSA) and `osv-scanner` (OSV.dev) when present — never
+  auto-installs. Output: markdown triage table + JSON sidecar
+  (`.claude/deps-audit/last-run.json`) + SARIF 2.1.0 (`--sarif`).
+  Eval composite **1.000**.
+- **Differential CVE pass.** `scripts/diff_cves.py` runs `mix_audit`
+  against OLD and NEW `mix.lock` (tmpdir copy — never mutates the
+  real lock) and reports `patched` / `introduced` / `still_exposed`.
+  The 25-package virgil dogfood surfaced 4 CVEs patched in real time
+  that the old single-state scan missed. GHSA freshness warning when
+  the advisory cache is >24h old.
+- **`/phx:deps-vet` — `hex_vet.exs` audit ledger.** cargo-vet-style
+  trust ledger at project root; `:safe_to_deploy` / `:safe_to_run` /
+  `:does_not_implement_crypto`. Vetted `{pkg,version}` pairs
+  downgrade audit findings to INFO; lock-vs-ledger disagreement →
+  lock wins. `--seed` imports a curated provenance baseline,
+  `--check` cross-references `mix.lock`, `--list` renders the table.
+- **PreToolUse gate.** Tiered `deps-audit-gate.sh` on
+  `mix deps.{get,update,compile}` (Tier 0 lock-SHA cache → Tier 1
+  bidi + new-dep → Tier 2 full). Tri-mode policy
+  `false | :new_only | :strict | :full` (`:new_only` default).
+  `PHX_SKIP_DEPS_AUDIT=1` escape hatch.
+- **LLM triage (threshold-gated).** `hex-deps-triager` (sonnet)
+  triages packages scoring >10 into
+  `{confidence, verdict, rationale, fp_reasons[]}`;
+  `context-supervisor` (haiku) consolidates so the parent context
+  sees only the verdict. Advisory-only (ordering, not severity).
+- **Precision layers (optional, soft deps).** Semgrep ruleset
+  (`priv/semgrep/elixir-supply-chain.yaml`) and YARA rules
+  (`priv/yara/hex-malware.yar`) — skipped cleanly if absent.
+- **CI + lifecycle.** `--ci` non-interactive mode (exit 0/1/2) with
+  GitHub/CircleCI/GitLab/Drone samples. Monthly cassette- and
+  seed-regen workflows with an org-policy 403 artifact fallback. EEF
+  CNA real-CVE corpus (decimal, bandit, phoenix, postgrex, cowlib) +
+  synthetic fixtures; full smoke harness (`runner.sh` +
+  `lib/detectors.sh` + `fixtures.d/`).
+- **Solutions auto-feed.** After a BLOCK finding, prompts (never
+  auto-writes) for `/phx:compound`; future audits pre-elevate
+  matching snippets from `.claude/solutions/supply-chain/`.
+- **Distributed imports v1.** `imports:` allow-list in `hex_vet.exs`
+  (only the plugin seed in v1), 24h TTL, renderer attribution.
+- Routing wired into `/phx:help` and `/phx:intro` cheat sheets;
+  contributor `references/skill-checklist.md`.
+
+### Changed
+
+- **Cache architecture: persistent → per-run ephemeral.** No
+  `.claude/deps-audit/cache/`; each run gets a fresh `mktemp -d`
+  `${AUDIT_TMPDIR}` torn down via `trap … EXIT`. A "no
+  vulnerabilities" verdict now reflects *today's* Hex + GHSA, never a
+  stale snapshot. Removed `prune_cache()` and the planned
+  `cache_signature.json`. Persistent files retained: `last-run.json`
+  (gate sidecar) and `policy.exs` (user-owned). New
+  `references/audit-tmpdir.md`. Migration: `rm -rf
+  .claude/deps-audit/cache/` is safe.
+- **Default full 8-rule scan** with streaming `[N/M] pkg ver`
+  progress; `--quick` opts down to CVE + retirement (<10s). Removed
+  the prompt that let users silently skip heuristics.
+- Empty `hex_vet.exs` stub defaults to
+  `block_on_unvetted: :new_only`.
+
+### Fixed
+
+- **CRITICAL — skill installed `mix_audit` when asked**, violating
+  the non-mutating contract (added the dep to `mix.exs`/`mix.lock`).
+  Iron Law #2 reworded to "NEVER install … **even if asked**";
+  consent-resistant guidance added. A skill that mutates "because the
+  user asked" is, to a security reviewer, indistinguishable from one
+  that mutates on its own.
+- **CRITICAL — gate policy parser silently downgraded enforcement.**
+  Took the *first* regex match in `hex_vet.exs`, so a commented
+  example (`# block_on_unvetted: false`) beat a real `:strict`
+  setting — fail-open. Now strips comments, takes the last
+  uncommented match (Elixir last-assignment-wins), warns on multiple
+  keys.
+- **Phase 5 hardening (security/test review):** the CVE-diff harness
+  no longer silently SKIPs fixtures missing `setup.sh`/`expected.txt`;
+  `_mix_audit_run_with_lock` unsets `MIX_*` env before running
+  (defense-in-depth for Iron Law #2); a failed lock-copy now bubbles
+  `return 2` instead of a false-green "no vulnerabilities".
+- **Reference robustness (2026-05-16 virgil dogfood):**
+  cross-tool-call `${AUDIT_TMPDIR}` handoff (`export`/functions/`trap
+  EXIT` do not survive separate Bash tool calls) + the quoted-heredoc
+  trap; `tarball-fetcher` baked `fetch.sh` (zsh has no `export -f`);
+  `python3 + urllib` is now the canonical Hex API client (curl hit
+  "Malformed input to a URL function"); mandatory `2>/dev/null` on
+  `Code.eval_file("mix.lock")`; expected `mix deps.audit` recompile
+  documented. **deps-vet:** Iron Law #6 — confirmation counts are
+  computed, not estimated (`--seed` showed `26/4` vs real `23/7`);
+  dropped the false "top-100" seed label (~30 entries) and reframed
+  it as a pinned provenance baseline, not current-lock certification.
+
+### Out of scope (deferred)
+
+- Companion `phx_deps_vet` Hex package — follow-up (separate repo).
+- Multi-org distributed audit imports — after the single-import
+  trust-chain proves out.
+- OTP-level CVE detection (SSH, inets, public_key) — needs an OTP
+  version layer separate from Hex packages.
+- Auto-refresh of the GHSA cache via PreToolUse hook.
+- Regenerate `hex_vet_seed.exs` against current top-package versions
+  (the bundled seed is Phoenix-1.7-era) — via the monthly
+  `seed-regen.yml` CI or a dedicated reviewed pass.
+
 ## [2.8.9] - 2026-05-08
 
 ### Changed
