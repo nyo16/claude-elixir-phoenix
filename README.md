@@ -76,7 +76,7 @@ that prevent the mistakes Elixir developers actually make in production.
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
-> **v2.9.0** -- 45 skills, 22 agents. Adds the `/phx:deps-audit` + `/phx:deps-vet` Hex supply-chain suite (8-rule scan, differential CVE, cargo-vet-style ledger, PreToolUse gate). 8-dimension quality eval, autoresearch self-improvement loop. Feedback welcome via [issues](https://github.com/oliver-kriska/claude-elixir-phoenix/issues).
+> **v2.9.0** -- 45 skills, 22 agents. Adds `/phx:deps-audit` + `/phx:deps-vet` Hex supply-chain suite. [Issues](https://github.com/oliver-kriska/claude-elixir-phoenix/issues) welcome.
 
 ## Installation
 
