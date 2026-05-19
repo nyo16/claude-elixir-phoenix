@@ -5,11 +5,137 @@ All notable changes to the Elixir/Phoenix Claude Code plugin.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.10.0] - 2026-05-16
+
+Adds a second, **framework-agnostic companion plugin** to the
+`oliver-kriska` marketplace: `catchup`. It is a fully independent
+plugin (own `.claude-plugin/plugin.json`, own version `0.1.0`, own
+README) — installed separately and **not** coupled to Elixir/Phoenix.
+The `elixir-phoenix` bump to 2.10.0 is the marketplace release vehicle
+(single root CHANGELOG); the only `elixir-phoenix`-internal changes
+this release are the README companion section and a `/phx:help`
+routing row. Implements GitHub issue #47.
+
+### Added
+
+- **`catchup` plugin — `/catchup` return-from-absence briefing.**
+  Standalone plugin at `plugins/catchup/`, second entry in
+  `.claude-plugin/marketplace.json`. User-triggered skill
+  (`disable-model-invocation`, slash-only). Fans out to GitHub (`gh`),
+  git, Linear MCP, and Google Calendar MCP, then emits **one**
+  prioritized brief in the 10-element Context Brief Framework scoped to
+  a personal catch-up (Intent + ranked priorities, what moved, conflict
+  risks, timeline). Flags: `--since` (incl. `last-session` mtime
+  auto-detect), `--sources`, `--depth quick|standard|deep`, `--focus`.
+  Writes `.claude/catchup/brief-<date>.md` + a ≤25-line inline summary.
+- **Impact-on-your-scope analysis** (issue #47, @druyang). First-class
+  brief block: intersects files moved on the default branch by others
+  in the window with the reader's in-flight scope (open-PR files, local
+  feature-branch diffs, working tree); classifies **direct** vs
+  **adjacent** overlap; `--depth deep` reads incoming diffs for
+  per-file *semantic* impact; `--focus impact` narrows the brief to
+  only this. Answers "how do these changes affect *my* work", not just
+  "what did I miss".
+- **Graceful-degradation contract.** Sources are detected before
+  query; a missing source becomes one honest line in the brief's
+  Risks/assumptions block, never an error. `git log` is the
+  always-available floor (valid minimum brief). No-Linear-MCP proxy:
+  harvests `[A-Z]{2,}-\d+` ticket refs from commit/PR titles
+  (labelled unverified). Privacy default is excerpt-only; Slack/Gmail
+  are v2 opt-in. v2 surface (scheduling, `.claude/catchup.local.md`,
+  cross-project rollup) is pinned in `references/config-schema.md` but
+  not built.
+- **Timezone-correct windows.** Calendar words (`friday`, `yesterday`,
+  a date) resolve in the **user's local TZ** (the machine running
+  `/catchup`), pivot through a single `SINCE_EPOCH`, then derive a UTC
+  `SINCE_ISO`. Every source is compared on that one absolute instant,
+  so colleagues in other timezones are included from *your* boundary
+  ("since *my* Friday", not "since each author's local Friday"). Fixes
+  a UTC-vs-local resolution bug (±14h). The brief's Timeline shows the
+  anchor with its TZ abbrev.
+- **Sonnet delegation (cost/speed).** The `/catchup` skill is now a
+  thin orchestrator: it resolves the window + sources, then spawns a
+  new **`catchup-runner` agent (`model: sonnet`, `effort: medium`)**
+  for the `gh`/`git` fan-out, impact analysis, and brief assembly —
+  so the caller's (often Opus) session no longer pays for the bulk
+  I/O and summarization. MCP (Linear/Calendar) is still pulled in the
+  caller's context (subagent MCP is unreliable) and passed to the
+  agent. Skill `effort` lowered `high → medium`.
+- **Smarter default window — `last-active`.** Replaces `last-session`
+  as the default: takes the MAX of (newest Claude session mtime for
+  this repo, your last own commit's committer-date, your last own
+  PR/review activity). The latest footprint is the true "you were
+  last here" instant; the brief records which signal won. New
+  explicit values: `--since last-session` (sessions only),
+  `--since last-commit` / `last-mine` (your git/PR only).
+- **`/ketchup` 🍅 easter-egg alias.** A second slash-only skill
+  (`skills/ketchup/`) that forwards verbatim to `/catchup` — same
+  flags, same behavior, squeezier name.
+- Verified end-to-end against a busy multi-developer production repo
+  (Linear/Calendar MCP absent → degradation + proxy paths exercised;
+  real direct file overlaps surfaced across local branches, a
+  high-churn core module as the hotspot).
+
+### Changed
+
+- `elixir-phoenix` README: added a "Companion plugin: `catchup`"
+  install section. `/phx:help`: added a "Returning after time off"
+  routing row pointing to `/catchup`.
+- **`catchup` is repo-scoped by default.** New `--scope repo|all`
+  flag (default `repo`). Every GitHub signal — review-requested,
+  notifications/mentions — is now filtered to the repo `/catchup` ran
+  in: review-requests use `gh pr list --repo "$REPO"
+  --search "review-requested:@me"` (was org-wide `gh search prs`),
+  and pings use the repo-scoped `/repos/$REPO/notifications` endpoint
+  (was cross-repo `/notifications?all=true`). `--scope all` re-enables
+  cross-repo, but those hits are listed in a separate **Other repos**
+  subsection and a Risks line, never folded into the repo's own lists.
+
+### Fixed
+
+- **`catchup` cross-repo leakage** (production finding). A brief run
+  inside one repo listed *other* repos' review queue, notifications,
+  and mentions (org-wide `gh search`/cross-repo `/notifications`),
+  contradicting the expectation that a per-repo catch-up is scoped to
+  that repo. Now repo-scoped by default; cross-repo is opt-in and
+  segregated (see Changed → `--scope`).
+- **`catchup-runner` turn budget** (production finding, ccrider-
+  verified). A busy real repo hit the agent's `maxTurns` mid-assembly
+  so it never returned the inline summary, forcing the (often Opus)
+  caller to re-summarize — defeating the Sonnet cost delegation.
+  `maxTurns 25 → 60`, added a "Tool economy" section (batch shell,
+  write the brief before risking the budget), and a skill-side
+  `SendMessage` fallback that finishes the summary cheaply in Sonnet
+  instead of in the caller.
+- **`catchup` correctness audit — 3 shell bugs.** (1) `git log
+  --name-only` over a range under-counts files ~70% due to history
+  simplification (real repo: 44 vs 140 ground truth — missed a landed
+  migration and a 14-file conflict); replaced with per-commit
+  `git diff-tree --no-commit-id --name-only -r`. (2) `awk -F'|'` on
+  commit subjects corrupts fields when a subject contains `|`
+  (e.g. `feat(a|b):`); switched to TAB (`%x09`) — macOS awk does not
+  accept `-F'\x1f'`. (3) Unbounded local-branch scan firehosed on a
+  400-branch repo; bounded to your own branches active in 60d, capped.
+- **`catchup` cross-repo timestamp discipline** (`--scope all`
+  production finding). On a narrow window a `--scope all` brief (1)
+  printed GitHub's UTC `updatedAt` (`06:36:23Z`) with a local-TZ
+  label (`06:36 CEST`, actually `08:36 CEST`), and (2) promoted a
+  *pre-window* standing review request to "do first" by bundling it
+  with an unrelated in-window issue update. `catchup-runner` +
+  `source-adapters` now state two hard rules: judge each item on its
+  *own* controlling timestamp ≥ `SINCE_EPOCH` (a related in-window
+  object never drags a pre-window object into Top priorities — it
+  goes to the "pre-window, for completeness" line), and convert `Z`
+  → `LOCAL_TZ` before printing any clock time.
+- **`catchup` anonymization.** Removed client repo/ticket identifiers
+  from the distributed plugin and CHANGELOG; examples use generic
+  `PROJ-####` / `lib/app*` placeholders.
+
 ## [2.9.0] - 2026-05-16
 
 Ships the `/phx:deps-audit` + `/phx:deps-vet` Hex/Elixir supply-chain
 suite. Built across five internal phases and two real-project dogfood
-passes (enaia-main, virgil) and consolidated into a single release —
+passes (two production apps) and consolidated into a single release —
 none of the interim 2.10.0–2.12.0 bumps were ever tagged or shipped
 (last release was v2.8.8).
 
@@ -315,15 +441,15 @@ none of the interim 2.10.0–2.12.0 bumps were ever tagged or shipped
   `# | Requirement | Status | Evidence`, classifying each stated
   requirement as MET / PARTIAL / UNMET / UNCLEAR. This formalizes the
   cross-check pattern already done manually in session `ba3f7890`
-  (2026-04-17, enaia-main) where the table was titled
-  "Cross-check against Linear ENA-8931 acceptance criteria".
+  (2026-04-17, a production repo) where the table was titled
+  "Cross-check against Linear PROJ-8931 acceptance criteria".
 - **Auto-detection of the requirements source** (no argument required).
   `/phx:review` now tries, in priority order:
-  1. Explicit `$ARGUMENTS` (path to `.md`, `ENA-8931`, or `#42`)
+  1. Explicit `$ARGUMENTS` (path to `.md`, `PROJ-8931`, or `#42`)
   2. Conversation context (recent `mcp__linear__get_issue` / `gh issue view`
      results are reused — no re-fetch)
   3. Git branch regex (`[A-Za-z][A-Za-z0-9_]+-\d+`, matching branches like
-     `ena-8278-extraction-scaffolding`)
+     `proj-8278-extraction-scaffolding`)
   4. Commit subjects since main (`[A-Z]+-\d+` or `#\d+`)
   5. Most recently modified `.claude/plans/*/plan.md` (extracts only
      `- [x]` completed items)
@@ -332,7 +458,7 @@ none of the interim 2.10.0–2.12.0 bumps were ever tagged or shipped
   Extracts requirements from the source, Greps the diff for evidence,
   classifies each item. Spawned in parallel with other review agents
   when a source is detected.
-- **New Usage**: `/phx:review ENA-8931`, `/phx:review #42`,
+- **New Usage**: `/phx:review PROJ-8931`, `/phx:review #42`,
   `/phx:review --no-requirements`.
 - **New reference**: `skills/review/references/requirements-detection.md`
   documents sources, regexes, fetch commands, and failure handling.
