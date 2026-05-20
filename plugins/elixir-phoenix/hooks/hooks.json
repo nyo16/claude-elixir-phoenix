@@ -194,7 +194,8 @@
           },
           {
             "type": "command",
-            "command": "echo 'Elixir/Phoenix plugin loaded — describe your task and I'\\''ll suggest the right workflow'"
+            "command": "echo",
+            "args": ["Elixir/Phoenix plugin loaded — describe your task and I'll suggest the right workflow"]
           }
         ]
       }

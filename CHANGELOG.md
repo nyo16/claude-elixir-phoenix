@@ -5,6 +5,44 @@ All notable changes to the Elixir/Phoenix Claude Code plugin.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- `check-pending-plans.sh` (Stop hook) now surfaces `background_tasks[]`
+  and `session_crons[]` from hook input as terminal warnings — catches
+  forgotten `mix phx.server`, `iex -S mix`, `mix watch` processes and
+  pending `/schedule` jobs at session stop (CC 2.1.145+ field).
+- `block-dangerous-ops.sh` (PreToolUse) now emits structured JSON
+  output with `permissionDecision: "deny"`, a user-facing reason, and
+  `hookSpecificOutput.additionalContext` containing the safer
+  alternative. Thanks to the CC 2.1.110 fix that preserves
+  additionalContext on blocked tool calls, the safer alternative now
+  persists into Claude's next turn instead of being a one-shot stderr
+  message.
+- CLAUDE.md documents the new `type: "mcp_tool"` hook (CC 2.1.118+)
+  with its SessionStart caveat — MCP servers may not be connected at
+  SessionStart, so detection probes stay on direct HTTP / `curl`;
+  reserve `mcp_tool` for PreToolUse / PostToolUse / Stop where the
+  connection is live.
+- Release checklist documents that `claude plugin tag` (CC 2.1.118+) does
+  NOT work for this repo's marketplace layout (it expects
+  `.claude-plugin/plugin.json` at the repo root, but our plugin lives at
+  `plugins/elixir-phoenix/.claude-plugin/plugin.json`). Manual
+  `git tag vX.Y.Z` remains the canonical path.
+
+### Changed
+
+- `block-dangerous-ops.sh` Elixir-specific branches (`mix ecto.reset`,
+  `mix ecto.drop`, `MIX_ENV=prod`) now self-gate on `mix.exs` presence,
+  matching the PR #55 cross-project-bleed pattern. The git force-push
+  branch remains intentionally global.
+- SessionStart welcome echo in `hooks.json` converted to `args: []`
+  exec form (CC 2.1.139+) to eliminate nested shell quoting.
+- `/phx:permissions` risk-classification flags that `Bash(find:*)`
+  allow rules no longer auto-approve `find -exec` / `find -delete`
+  (CC 2.1.113+ tightening).
+
 ## [2.10.2] - 2026-05-20
 
 ### Fixed
