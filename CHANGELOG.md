@@ -5,6 +5,39 @@ All notable changes to the Elixir/Phoenix Claude Code plugin.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.10.1] - 2026-05-20
+
+Patch release fixing cross-project bleed when the plugin is enabled globally
+(issue #55). All Elixir-specific hooks now self-gate on `mix.exs` presence —
+they no-op cleanly in non-Elixir repos instead of firing Phoenix Iron Laws on
+unrelated files. `security-reminder.sh` additionally tightens its filename
+match to eliminate false positives on parent directory names and non-source
+files.
+
+### Fixed
+
+- **Hooks now self-gate on `mix.exs` presence** — no Iron Laws, security
+  reminders, subagent context injection, `.claude/` directory creation, or
+  plan-STOP messages in non-Elixir projects when the plugin is enabled
+  globally. Affects: `security-reminder.sh`, `log-progress.sh`,
+  `inject-iron-laws.sh`, `precompact-rules.sh`, `setup-dirs.sh`,
+  `plan-stop-reminder.sh`, `format-elixir.sh`, `iron-law-verifier.sh`,
+  `debug-statement-warning.sh` (#55).
+- **`security-reminder.sh` filename matching tightened** — basename-only
+  match with word-boundary separators (`_.-`) and restricted to Elixir
+  source extensions (`.ex/.exs/.heex/.eex/.leex`). Eliminates false
+  positives like `tokenizer.cpp` (`token`), `/admin_panel/foo.ex` (parent
+  dir `admin`), `docs/session-notes.md` (wrong extension), and the
+  reporter's `session-state.md` case (#55).
+- **`hooks.json` Edit|Write block** — added `if:` extension filter for
+  `security-reminder.sh` as defense in depth alongside the script's
+  self-gating.
+
+### Changed
+
+- README install section: noted project-scope enable as a tidiness
+  preference for multi-stack developers (global enable is now safe).
+
 ## [2.10.0] - 2026-05-16
 
 Adds a second, **framework-agnostic companion plugin** to the

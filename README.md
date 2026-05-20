@@ -90,6 +90,17 @@ that prevent the mistakes Elixir developers actually make in production.
 /plugin install elixir-phoenix
 ```
 
+> **Multi-stack tip — project-scope enable.** This plugin is opinionated for
+> Elixir/Phoenix. If you work across multiple language stacks, prefer enabling
+> it per-project rather than globally — drop this into `<project>/.claude/settings.json`:
+>
+> ```json
+> { "enabledPlugins": { "elixir-phoenix@oliver-kriska": true } }
+> ```
+>
+> Hooks self-gate on `mix.exs` presence (v2.10.1+), so global enable is safe
+> — project-scoping is just a tidiness preference.
+
 ### Companion plugin: `catchup`
 
 The same marketplace also ships **`catchup`** — a framework-agnostic
