@@ -5,6 +5,24 @@ All notable changes to the Elixir/Phoenix Claude Code plugin.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.10.2] - 2026-05-20
+
+### Fixed
+
+- `/phx:research`, `/phx:brainstorm`, `/phx:perf`, `/phx:pr-review` failing
+  with "skill not listed" when invoked via slash command (issue #53,
+  reported by @bigardone). Root cause: `disable-model-invocation: true`
+  was still set on these four skills, triggering Claude Code bug
+  [#26251](https://github.com/anthropics/claude-code/issues/26251) where
+  the model refuses to invoke a skill via the Skill tool even when the
+  user typed the slash command. Removing the flag — matching the
+  precedent established in commit `f1fc494` (plan/review/investigate) —
+  restores reliable invocation across native CC and third-party CC
+  wrappers (Conductor, OpenCode, etc.), and lets the model see these
+  skills in its inventory so workflow chains
+  (`/phx:brainstorm → /phx:plan`, `intent-detection → /phx:research`)
+  resolve correctly.
+
 ## [2.10.1] - 2026-05-20
 
 Patch release fixing cross-project bleed when the plugin is enabled globally
