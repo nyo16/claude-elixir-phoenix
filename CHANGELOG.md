@@ -7,6 +7,11 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [2.10.3] - 2026-05-20
+
+Patch release bundling two unreleased changes since v2.10.2: CC hook-API
+adoption from PR #56 and the eval-framework multi-model trigger scorer.
+
 ### Added
 
 - `check-pending-plans.sh` (Stop hook) now surfaces `background_tasks[]`
@@ -30,6 +35,27 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `.claude-plugin/plugin.json` at the repo root, but our plugin lives at
   `plugins/elixir-phoenix/.claude-plugin/plugin.json`). Manual
   `git tag vX.Y.Z` remains the canonical path.
+
+### Added (contributor)
+
+- Multi-model trigger eval — `lab/eval/trigger_scorer.py` gained a
+  `--model <alias_or_full_id>` flag (default `claude-haiku-4-5`,
+  preserves all existing behavior). Aliases (`haiku`/`sonnet`/`opus`)
+  canonicalize to full IDs so `--model haiku` and
+  `--model claude-haiku-4-5` share one cache. Non-default models land
+  in `lab/eval/triggers/results/by-model/{model}/`; per-result JSON
+  records the `model` field so caches are self-describing.
+- `lab/eval/compare_models.py` — N-way model comparator. Loads N
+  `_aggregate.json` files via `--models alias,alias,…` or
+  `--aggregates path…`, prints an ASCII table sorted by per-skill
+  spread with `↕`/`⚠` markers at 10%/20% disagreement, plus an
+  apples-to-apples intersection mean and pairwise delta when skill
+  sets differ. `--format json` for machine consumption.
+- `Makefile`: `MODEL=sonnet make eval-multimodel` (full per-model
+  sweep), `MODELS=haiku,sonnet make eval-compare-models` (cached
+  comparison). Foundation for verifying v3.0.0 multi-agent ports
+  (Codex/OpenCode/Pi) on non-Claude routing judges.
+  See issue #48, T1.3 Phase 1.
 
 ### Changed
 
