@@ -7,6 +7,36 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [2.10.4] - 2026-05-21
+
+Patch: fix force-push hook false-positive (issue #61) and the same
+scan-past-separator class in the two sibling rules.
+
+### Fixed
+
+- `block-dangerous-ops.sh` (PreToolUse) — the force-push regex
+  `git push.*(--force|-f)\b` matched `--force-with-lease` (in ERE,
+  `\b` is a word boundary and the hyphen after `--force` is non-word,
+  so the boundary triggered on the lease variant) AND scanned past
+  shell command separators, so an unrelated `&& gh ... --force-with-lease`
+  on the same line tripped the deny. The hook blocked the very command
+  its `permissionDecisionReason` recommended as the safer alternative.
+  Reported by @inou (issue #61) — hit on a Sprint 8 rebase cycle that
+  stranded three rebased branches. New ERE anchors on start-of-line or
+  shell separator (`;` `&` `|` `&&` `||`), keeps the scan inside the
+  current command (`[^;|&]*`), and requires the flag to end at a word
+  terminator (`([[:space:];&|]|$)`), so `--force-with-lease` is allowed
+  while real `--force`/`-f` are still blocked. The same anchor fix is
+  applied to the `mix ecto.(reset|drop)` and `MIX_ENV=prod mix` rules
+  in the same file, which had the identical scan-past-separator
+  failure mode (e.g. `echo "do not run mix ecto.reset" && mix test`
+  used to be denied).
+- New `plugins/elixir-phoenix/hooks/tests/block-dangerous-ops_test.sh`
+  regression harness — 41 cases covering real force-push, the lease
+  variant, scan-past-separator false positives, Elixir-only Ecto and
+  MIX_ENV rules, and the `mix.exs`-gated cross-project bleed (#55).
+  Run with `bash plugins/elixir-phoenix/hooks/tests/block-dangerous-ops_test.sh`.
+
 ## [2.10.3] - 2026-05-20
 
 Patch release bundling two unreleased changes since v2.10.2: CC hook-API
