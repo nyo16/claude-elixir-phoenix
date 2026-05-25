@@ -7,9 +7,24 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [2.10.5] - 2026-05-25
+
+Patch: route audit subagents to declared-model specialists instead of
+`general-purpose`, cutting Opus subagent volume per `/phx:audit` run.
+
 ### Changed
 
-- `skills/audit/SKILL.md`: route 3 of 5 parallel audit subagents to declared-model plugin specialists instead of `general-purpose` (which inherits the parent session model, usually Opus). Architecture → `phoenix-patterns-analyst` (sonnet), Security → `security-analyzer` (opus), Test health → `testing-reviewer` (sonnet). Performance and Dependency tracks kept on `general-purpose` with TODO notes — no plugin specialist exists for project-wide perf or deps audit. Motivation: data analysis of 4,561 local sessions showed 61.6% of Task/Agent invocations bypass the plugin via CC built-ins, materially explaining why Sonnet+Haiku combined are only ~7% of total token spend despite 18 of 22 plugin agents declaring those models. See `.claude/research/2026-05-23-jsonl-cache-analysis.md` for the full investigation.
+- `skills/audit/SKILL.md`: route 3 of 5 parallel audit subagents to
+  declared-model plugin specialists instead of `general-purpose` (which
+  inherits the parent session model, usually Opus). Architecture →
+  `phoenix-patterns-analyst` (sonnet), Security → `security-analyzer`
+  (opus), Test health → `testing-reviewer` (sonnet). Performance and
+  Dependency tracks kept on `general-purpose` with TODO notes — no plugin
+  specialist exists for project-wide perf or deps audit. Motivation: a
+  JSONL analysis of 4,561 local sessions found 61.6% of Task/Agent
+  invocations bypass the plugin via CC built-ins, materially explaining
+  why Sonnet+Haiku combined are only ~7% of total token spend despite 18
+  of 22 plugin agents declaring those models.
 
 ## [2.10.4] - 2026-05-21
 
