@@ -7,6 +7,10 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+
+- `skills/audit/SKILL.md`: route 3 of 5 parallel audit subagents to declared-model plugin specialists instead of `general-purpose` (which inherits the parent session model, usually Opus). Architecture → `phoenix-patterns-analyst` (sonnet), Security → `security-analyzer` (opus), Test health → `testing-reviewer` (sonnet). Performance and Dependency tracks kept on `general-purpose` with TODO notes — no plugin specialist exists for project-wide perf or deps audit. Motivation: data analysis of 4,561 local sessions showed 61.6% of Task/Agent invocations bypass the plugin via CC built-ins, materially explaining why Sonnet+Haiku combined are only ~7% of total token spend despite 18 of 22 plugin agents declaring those models. See `.claude/research/2026-05-23-jsonl-cache-analysis.md` for the full investigation.
+
 ## [2.10.4] - 2026-05-21
 
 Patch: fix force-push hook false-positive (issue #61) and the same
