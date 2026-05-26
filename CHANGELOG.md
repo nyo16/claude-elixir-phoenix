@@ -7,6 +7,23 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- **Protected-section invariant** in the autoresearch loop (contributor
+  tooling, not distributed). The `## Iron Laws` section of every SKILL.md is
+  now **append-only slow state**: the loop may add a law but a delete/reword
+  forces REVERT. Enforced as a hard gate via `checks.sh` check #7 (backed by
+  `lab/autoresearch/scripts/protected_sections.py`, which diffs the working
+  tree against git HEAD, prefix-stripped so renumbering is allowed), plus a
+  "Protected Sections" declaration in `lab/autoresearch/program.md`. Borrowed
+  from SkillOpt (arXiv 2605.23904), which measured this fast/slow guarantee at
+  ~22 points on SpreadsheetBench. A live test confirmed the necessity: the
+  8-dimension scorer is *blind* to single-law deletion (composite and `safety`
+  both stay 1.0, because the scorer is stateless and the `safety` dimension
+  only checks section presence + min count) — so the old soft gate would have
+  silently accepted dropping a security Iron Law. New tests:
+  `lab/autoresearch/tests/test_protected_sections.py` (10 cases).
+
 ## [2.10.5] - 2026-05-25
 
 Patch: route audit subagents to declared-model specialists instead of
