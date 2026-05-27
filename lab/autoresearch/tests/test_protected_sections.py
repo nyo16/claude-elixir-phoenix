@@ -3,8 +3,6 @@
 import os
 import sys
 
-import pytest
-
 # protected_sections.py lives in scripts/ and is normally run as __main__,
 # so make it importable without turning scripts/ into a package.
 SCRIPTS_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "scripts")
